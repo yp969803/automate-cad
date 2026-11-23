@@ -1,0 +1,46 @@
+# Plan: Auto-mate finder for STEP assemblies
+
+## Context
+Weekend assignment: given one part (STEP) with selected face IDs and an assembly (STEP), find every place in the assembly where those faces mate, say which part each match is on, return ALL instances (e.g. 4 slots in a 4-jaw chuck), highlight them, and justify the approach. Greenfield (empty folder). FreeCAD 1.1 is installed via snap.
+
+## Key design decisions (and why)
+- **Match by shape, not by current position.** The key is not sitting in the slot in the file, so matching must use intrinsic geometry (type, size, angles between faces), then compute where the part *would* go.
+- **Match face groups, not single faces.** A vice has hundreds of planes; one plane matches everything. The selection's internal relations (angles, spacings, axes) are what make it unique.
+- **Mates are complementary.** Convex ↔ concave, normals opposite, equal radius/width within a clearance tolerance. Same idea as SolidWorks SmartMates / Mate References and Reuleaux's lower pairs.
+- **Don't require equal area.** A sliding jaw face is shorter than the body rail it slides on. Compare cross-section sizes (widths, radii, spacings), not areas or lengths along the free direction.
+- **Use FreeCAD's bundled Python (`freecad.cmd`) first.** Already installed, includes OpenCascade via the Part module, reads STEP assemblies, and its `FaceN` numbering is the same face IDs the user sees when clicking in FreeCAD. Fallback: pythonocc-core / CadQuery if the snap sandbox blocks something.
+
+## Pipeline
+1. **Load** the part and the assembly; flatten assembly into instances with world placement. Exclude any instance identical to the selected part itself.
+2. **Face descriptors** for every face: type (plane/cylinder/cone/sphere/torus/other), radius, normal or axis, a point on it, convexity (material side from face orientation), and extents in its own frame.
+3. **Selection signature**: small graph — nodes = selected faces, edges = angle between normals/axes, distance between parallel planes, coaxiality, axis offsets.
+4. **Candidate search (fast)**:
+   - Per-part bounding-box / size prefilter.
+   - Hash index of faces by (type, rounded radius/width).
+   - Anchor on the most distinctive selected face (e.g. a cylinder of a rare radius), then grow the match by checking edge relations (subgraph matching with backtracking). All candidate faces in one group must be on the same part.
+5. **Compute pose**: rigid transform (proper rotation, no mirroring) that maps selected faces onto the candidate group; for planes/cylinders solve from normals/axes + points.
+6. **Verify**: place the part with that pose, check face-to-face distance ≈ 0 (BRepExtrema) and overlap of mating faces; final interference check (boolean common ≈ 0 volume, allowing clearance). Reject failures.
+7. **Collect all instances**; de-duplicate (a square key fits one slot in 4 rotations → keep one result per candidate face set).
+8. **Label the joint** from what's left free (planar/prismatic/revolute/cylindrical/fixed via degrees of freedom) — cheap, and strengthens the write-up.
+9. **Output** JSON (part name, face IDs, transform, score, joint type) + visual highlight: colour matched faces in FreeCAD and save an `.FCStd` (or coloured STEP).
+
+## Build order
+0. Move the session to `/home/yashkp/automate-cad` and save this plan as `/home/yashkp/automate-cad/docs/plan.md` (project code lives in that folder too).
+1. Check `freecad.cmd` can import `Part`/`Import` and load the vice STEP; dump face descriptors for one part.
+2. Single-face complementary matching + highlight (proves the pipeline end-to-end).
+3. Group/subgraph matching + pose.
+4. Verification + de-duplication.
+5. Joint labelling + JSON/report.
+6. Test on the vice (`WM290V_RedrawStart.stp`, split into sub-assemblies while iterating), a chuck + key, and a simple peg/hole test model built in FreeCAD.
+7. Write-up: approach, why, tolerances, limits (threads, B-spline/freeform faces, mirrored parts, very loose fits).
+
+## Open items
+- Need the key/part STEP and the face IDs used in the Notion images (only screenshots there). Otherwise pick faces ourselves in FreeCAD.
+- Tolerance values (default: 0.1 mm absolute, 1° angular, radius clearance up to ~2%).
+
+## Verification
+- Chuck key 4 faces → the slot(s); should match the 3 parts highlighted in the Notion image.
+- Vice jaw sliding faces → body rails.
+- Peg/hole test → exact expected hole count.
+- Negative test: unrelated faces → no verified matches.
+- Cross-check a couple of matches by mating by hand in FreeCAD.
