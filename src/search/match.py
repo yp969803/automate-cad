@@ -11,6 +11,7 @@ CAD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cad")  # m
 ANG = 0.0175   # ~1 deg, on dot products
 DIST = 0.1     # mm
 CLEAR = 0.02   # radius clearance, 2%
+CLR = 0.5      # mm: a socket/slot may be wider than the part by this much (sliding fit); never narrower than DIST
 
 def to_json(p):
     if p.endswith(".json"): return p
@@ -62,15 +63,27 @@ def inv(a, b):
 def pair_ok(sa, sb, ca, cb):
     (v, sg), (w, _) = inv(sa, sb), inv(ca, cb)
     if len(v) != len(w): return False
-    return all(abs(x * g - y) <= (ANG if i == 0 else DIST) for i, (x, y, g) in enumerate(zip(v, w, sg + [1] * 9)))
+    pp = kind(sa) == kind(sb) == "P"
+    for i, (x, y, g) in enumerate(zip(v, w, sg + [1] * 9)):
+        diff = y - x * g
+        if i == 0: lo, hi = -ANG, ANG
+        elif pp: lo, hi = (-DIST, CLR) if x < 0 else (-CLR, DIST)  # parallel planes: x<0 = faces point away (part is male): the match may be wider
+        else: lo, hi = -DIST, DIST
+        if not lo <= diff <= hi: return False
+    return True
 
 def search(sel, faces):
     """All assignments sel[i] -> faces[j] (one part) with complementary faces and consistent pair relations."""
     cands = [[c for c in faces if complementary(s, c)] for s in sel]
+    normals = [np.array([c["axis"] for c in cs]) if kind(s) == "P" and cs else None for s, cs in zip(sel, cands)]
     out = []
     def rec(i, chosen):
         if i == len(sel): out.append(tuple(c["id"] for c in chosen)); return
-        for c in cands[i]:
+        ok = np.ones(len(cands[i]), bool)  # vectorised first cut: plane pairs must keep the angle between normals
+        for j, d in enumerate(chosen):
+            if normals[i] is not None and kind(sel[j]) == "P": ok &= np.abs(normals[i] @ vec(d, "axis") - vec(sel[j], "axis") @ vec(sel[i], "axis")) <= ANG
+        for k in np.flatnonzero(ok):
+            c = cands[i][k]
             if all(c["id"] != d["id"] and pair_ok(sel[j], sel[i], d, c) for j, d in enumerate(chosen)): rec(i + 1, chosen + [c])
     rec(0, []); return out
 
@@ -120,7 +133,7 @@ def poses(sel, cands):
             else: rows.append(np.eye(3)); rhs.append(pc - R @ ps)
         A, b = np.vstack(rows), np.concatenate(rhs)
         t = np.linalg.lstsq(A, b, rcond=None)[0]
-        if np.abs(A @ t - b).max() > DIST: continue
+        if np.abs(A @ t - b).max() > DIST + CLR / 2: continue  # leftover = half the clearance on each side
         _, sv, vt = np.linalg.svd(A); N = vt[(sv > 1e-6).sum():]  # N: directions the constraints leave free
         t = t + N.T @ (N @ (center(cands) - R @ center(sel) - t))  # centre the selection on the match along free directions
         M = np.eye(4); M[:3, :3] = R; M[:3, 3] = t
@@ -141,7 +154,7 @@ def run(part, ids, assembly):
         if not (part.endswith((".step", ".stp")) and assembly.endswith((".step", ".stp"))): raise SystemExit("freeform fallback needs STEP inputs")
         import freeform
         return freeform.find(part, assembly, sel, same_part, P)
-    gap = DIST + CLEAR * max([s.get("radius", 0) for s in sel])  # contact tolerance used by verify
+    gap = DIST + CLR / 2 + CLEAR * max([s.get("radius", 0) for s in sel])  # contact tolerance used by verify: half the width clearance per face
     res = []
     for q in A:
         if same_part(P, q): continue  # the selected part itself

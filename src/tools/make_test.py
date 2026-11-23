@@ -38,3 +38,5 @@ def ellipsoid(rz, centre, rot=0):
 export([("knob", ellipsoid(12, V(0, 0, 0)))], "cache/knob.step")
 export([("blockMatch", Part.makeBox(60, 60, 60, V(500, 0, 0)).cut(ellipsoid(12, V(530, 30, 30), 40))),
         ("blockWrong", Part.makeBox(60, 60, 60, V(600, 0, 0)).cut(ellipsoid(9.6, V(630, 30, 30), 40)))], "cache/test_freeform.step")
+# sliding fit: key (10 wide) vs slots 10.4 (clearance, must match) and 9.6 (too narrow, must not)
+export([("slot_loose", block(10.4, 0)), ("slot_tight", block(9.6, 100))], "cache/test_clearance.step")
