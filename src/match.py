@@ -14,7 +14,7 @@ CLEAR = 0.02   # radius clearance, 2%
 def to_json(p):
     if p.endswith(".json"): return p
     out = "cache/" + os.path.basename(p) + ".json"
-    if not os.path.exists(out) or os.path.getmtime(out) < os.path.getmtime(p):
+    if not os.path.exists(out) or os.path.getmtime(out) < max(os.path.getmtime(p), os.path.getmtime("src/descriptors.py")):
         subprocess.run(["freecad.cmd", "-c", f"import sys; sys.path.insert(0,'src'); import descriptors; descriptors.run({p!r},{out!r})"], check=True, stdout=subprocess.DEVNULL)
     return out
 
@@ -29,7 +29,8 @@ def complementary(s, c):
     if s["type"] == "Plane": return True  # facing is checked by the pair relations: the part is not in place yet
     if s["type"] == "Toroid" or s["convex"] == c["convex"]: return False  # torus: no rule yet
     if s["type"] in ("Cylinder", "Sphere"): return abs(s["radius"] - c["radius"]) <= CLEAR * s["radius"] + 1e-6
-    if s["type"] == "Cone": return abs(s["semi_angle"] - c["semi_angle"]) < ANG
+    if s["type"] == "Cone": return abs(abs(s["semi_angle"]) - abs(c["semi_angle"])) < ANG and \
+        s["slant"][0] <= c["slant"][1] + DIST and c["slant"][0] <= s["slant"][1] + DIST  # angle sign = axis direction; bands from the apex must overlap
     return False  # Toroid: no rule yet
 
 def inv(a, b):
@@ -74,23 +75,91 @@ def search(sel, faces):
 def same_part(p, q):
     return len(p["faces"]) == len(q["faces"]) and abs(sum(f["area"] for f in p["faces"]) - sum(f["area"] for f in q["faces"])) < 1e-6
 
+def unit(v): v = np.asarray(v, float); return v / np.linalg.norm(v)
+
+def center(fs):
+    bb = np.array([f["bbox"] for f in fs]); return (bb[:, :3].min(0) + bb[:, 3:].max(0)) / 2
+
+def rotation(S, C):
+    """Proper rotation R with R s ~ c for unit vector pairs, and the rotational freedom left (0, 1 or 3 axes)."""
+    if not S: return np.eye(3), 3
+    u, sv, vt = np.linalg.svd(np.array(S).T @ np.array(C))
+    if sv[1] > 0.05 * sv[0]:
+        d = np.sign(np.linalg.det(vt.T @ u.T)); return vt.T @ np.diag([1, 1, d]) @ u.T, 0
+    a, b = S[0], C[0]; v = np.cross(a, b); c = a @ b
+    if np.linalg.norm(v) < 1e-9:  # parallel or antiparallel
+        if c > 0: return np.eye(3), 1
+        p = unit(np.cross(a, [1, 0, 0] if abs(a[0]) < .9 else [0, 1, 0])); return 2 * np.outer(p, p) - np.eye(3), 1
+    K = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+    return np.eye(3) + K + K @ K / (1 + c), 1
+
+LABEL = {(0, 0): "fixed", (0, 1): "slides along one axis", (1, 0): "revolute (spins)", (1, 1): "cylindrical (spins and slides)",
+         (1, 2): "planar (slides in a plane, spins)", (3, 0): "ball (any rotation)"}
+
+def poses(sel, cands):
+    """Rigid motions (part -> assembly) that put sel faces onto cands faces, facing each other. Axis directions
+    have no sign, so every sign choice is tried and the inconsistent ones drop out. Free motion is left centred.
+    A cone seat is fixed by making the two apexes coincide (same angle => surfaces coincide), so depth is not free.
+    shortcut: sphere-only fits leave rotation free (identity)."""
+    lines = [i for i, f in enumerate(sel) if kind(f) == "L"]; out, seen = [], set()
+    for signs in itertools.product([1, -1], repeat=len(lines)):
+        sg = dict(zip(lines, signs)); S, C = [], []
+        for i, (a, c) in enumerate(zip(sel, cands)):
+            if kind(a) == "P": S.append(unit(a["axis"])); C.append(-unit(c["axis"]))
+            elif kind(a) == "L": S.append(unit(a["axis"])); C.append(sg[i] * unit(c["axis"]))
+        R, nr = rotation(S, C)
+        if any(np.linalg.norm(R @ x - y) > 0.03 for x, y in zip(S, C)): continue
+        rows, rhs = [], []
+        for a, c in zip(sel, cands):
+            ps, pc = vec(a, "point"), vec(c, "point"); k = kind(a)
+            if k == "P": n = unit(c["axis"]); rows.append(n[None]); rhs.append([n @ (pc - R @ ps)])
+            elif k == "L" and "apex" in a: rows.append(np.eye(3)); rhs.append(vec(c, "apex") - R @ vec(a, "apex"))
+            elif k == "L": u = unit(c["axis"]); Pm = np.eye(3) - np.outer(u, u); rows.append(Pm); rhs.append(Pm @ (pc - R @ ps))
+            else: rows.append(np.eye(3)); rhs.append(pc - R @ ps)
+        A, b = np.vstack(rows), np.concatenate(rhs)
+        t = np.linalg.lstsq(A, b, rcond=None)[0]
+        if np.abs(A @ t - b).max() > DIST: continue
+        _, sv, vt = np.linalg.svd(A); N = vt[(sv > 1e-6).sum():]  # N: directions the constraints leave free
+        t = t + N.T @ (N @ (center(cands) - R @ center(sel) - t))  # centre the selection on the match along free directions
+        M = np.eye(4); M[:3, :3] = R; M[:3, 3] = t
+        key = tuple(np.round(M, 3).ravel())
+        if key not in seen: seen.add(key); out.append(dict(matrix=M.tolist(), free=[nr, len(N)], joint=LABEL.get((nr, len(N)), f"{nr} rotation / {len(N)} translation free")))
+    return out
+
 def run(part, ids, assembly):
     P = json.load(open(to_json(part)))[0]; A = json.load(open(to_json(assembly)))
-    sel = [next(f for f in P["faces"] if f["id"] == i) for i in ids]
+    sel = []  # selected ids -> merged faces (a selection may hit several pieces of one merged face)
+    for i in ids:
+        g = next((f for f in P["faces"] if i in f["ids"]), None)
+        if g is None: raise SystemExit(f"Face {i} not found in the part")
+        if g not in sel: sel.append(g)
     for s in sel:
         if kind(s) is None: raise SystemExit(f"Face {s['id']} is {s['type']}: no matching rule for this surface type yet")
+    gap = DIST + CLEAR * max([s.get("radius", 0) for s in sel])  # contact tolerance used by verify
     res = []
     for q in A:
         if same_part(P, q): continue  # the selected part itself
-        seen = set()
+        seen = set(); byid = {f["id"]: f for f in q["faces"]}
         for m in search(sel, q["faces"]):
             if frozenset(m) in seen: continue  # symmetric fits (e.g. 4 rotations) share one face set
-            seen.add(frozenset(m)); res.append(dict(part=q["part"], object=q["name"], faces=dict(zip(map(str, ids), m))))
+            seen.add(frozenset(m)); cands = [byid[c] for c in m]; ps = poses(sel, cands)
+            if ps: res.append(dict(part=q["part"], object=q["name"], faces={str(s["id"]): c["ids"] for s, c in zip(sel, cands)},
+                                   sel={str(s["id"]): s["ids"] for s in sel}, gap_tol=gap, poses=ps))
     return res
 
+def verify(part, assembly, cand, out):
+    subprocess.run(["freecad.cmd", "-c", f"import sys; sys.path.insert(0,'src'); import verify; verify.run({part!r},{assembly!r},{cand!r},{out!r})"], check=True, stdout=subprocess.DEVNULL)
+    return json.load(open(out))
+
 if __name__ == "__main__":
-    part, ids, asm = sys.argv[1], [int(x) for x in sys.argv[2].split(",")], sys.argv[3]
-    res = run(part, ids, asm)
-    json.dump(res, open(sys.argv[4] if len(sys.argv) > 4 else "cache/matches.json", "w"), indent=1)
-    print(f"{len(res)} match(es) for faces {ids}")
-    for r in res: print(" ", r["part"], r["faces"])
+    args = [a for a in sys.argv[1:] if a != "--no-verify"]; part, ids, asm = args[0], [int(x) for x in args[1].split(",")], args[2]
+    out = args[3] if len(args) > 3 else "cache/matches.json"
+    cand = run(part, ids, asm); json.dump(cand, open("cache/candidates.json", "w"))
+    print(f"{len(cand)} candidate(s) by face relations for faces {ids}")
+    res = cand
+    if "--no-verify" not in sys.argv and cand:  # nothing to verify -> don't load the assembly in FreeCAD
+        if not (part.endswith((".step", ".stp")) and asm.endswith((".step", ".stp"))): raise SystemExit("verify needs STEP inputs (use --no-verify for JSON)")
+        res = verify(part, asm, "cache/candidates.json", out); print(f"{len(res)} verified (placed part touches the match and does not overlap the assembly)")
+    else: json.dump(res, open(out, "w"), indent=1)  # --no-verify, or no candidates
+    for r in res:
+        for p in r["poses"]: print(" ", r["part"], r["faces"], "|", p["joint"], "|", "gap", round(p["gap"], 3), "overlap", "n/a (open shell)" if p["overlap"] is None else round(p["overlap"], 3))

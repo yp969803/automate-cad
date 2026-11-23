@@ -51,12 +51,13 @@ See [alternatives.md](alternatives.md) for pros and cons of each approach and to
 4. Verification + de-duplication.
 5. Joint labelling + JSON/report.
 6. Sphere handling (rotation-free pose case) + B-spline re-classification.
-7. Test on the vice (`WM290V_RedrawStart.stp`, split into sub-assemblies while iterating), a chuck + key, a peg/hole model and a ball/socket model built in FreeCAD.
+7. Test on the lathe (`WM290V_RedrawStart.stp`, split into sub-assemblies while iterating; parts of it stand in for the key), a separate bench-vice model for the jaw case, a peg/hole model and a ball/socket model built in FreeCAD.
 8. If time: freeform point-cloud fallback (Open3D). Otherwise describe it in the write-up as the extension.
 9. Write-up: approach, alternatives considered and why rejected, tolerances, limits (threads, freeform accuracy, symmetric shapes, mirrored parts, very loose fits).
 
-## Assumptions
-- **No split faces.** One physical surface = one face in the STEP file, on both the selected part and the assembly. No face-merge step and no point-cloud rerun for split faces. If the vice turns out to have many splits, revisit (merge touching faces on the same surface first).
+## Split faces
+- STEP exporters often split one physical surface into several faces (e.g. a cylinder as two halves), and the two parts of a mate can be split differently. Real data confirmed it (lathe pin: 2 half-cylinders vs one full-cylinder hole).
+- So no "no splits" assumption: `descriptors.py` merges faces that share an edge and lie on the same plane/cylinder/cone/sphere (same material side) before matching. Merged faces keep all original face IDs (`ids`). Limits: unrecognised (B-spline/extrusion) faces stay split; splits not connected by an edge are not merged.
 
 ## Open items
 - Need the key/part STEP and the face IDs used in the Notion images (only screenshots there). Otherwise pick faces ourselves in FreeCAD.

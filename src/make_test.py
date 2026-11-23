@@ -2,7 +2,8 @@
 cache/peg.step      : peg R5            -> select face 1 (cylinder)
 cache/key.step      : 10mm cube         -> select faces 1,2 (two opposite planes)
 cache/test.step     : assembly: plate with holes R5, R5.05, R8 ; block A with 10mm slot ; block B with 12mm slot ; ball
-Expected: peg face 1 -> plate holes R5 and R5.05 (2 matches, not R8); key faces 1,2 -> slot in block A only.
+Expected: peg face 1 -> plate holes R5 and R5.05 (2 matches, not R8); key faces 1,2 -> slot in block A only;
+peg vs test_blocked.step -> 1 candidate, 0 verified (plug in the hole).
 """
 import FreeCAD, Part, Import
 V = FreeCAD.Vector
@@ -19,3 +20,10 @@ export([("key", Part.makeBox(10, 10, 10))], "cache/key.step")
 # slot cut along x through the block: walls at y = +-w/2 facing each other
 def block(w, y0): return Part.makeBox(40, 30, 20, V(200, y0, 0)).cut(Part.makeBox(40, w, 15, V(200, y0 + (30 - w) / 2, 5)))
 export([("plate", plate), ("blockA", block(10, 0)), ("blockB", block(12, 100)), ("ball", Part.makeSphere(8, V(0, 100, 0)))], "cache/test.step")
+# negative case: hole R5 with a different solid (R3 plug) already inside -> the peg must be rejected (overlap)
+blocked = Part.makeBox(40, 40, 10).cut(Part.makeCylinder(5, 10, V(20, 20, 0)))
+export([("plate", blocked), ("plug", Part.makeCylinder(3, 10, V(20, 20, 0)))], "cache/test_blocked.step")
+# cone seat: plug (cone r5->3, h10) and a block with a matching conical socket 40 mm away, apex-up
+plug = Part.makeCone(5, 3, 10)
+socket = Part.makeBox(30, 30, 20, V(100, 0, 0)).cut(Part.makeCone(5, 3, 10, V(115, 15, 4)))
+export([("plug", plug)], "cache/plug.step"); export([("socket", socket)], "cache/test_cone.step")
