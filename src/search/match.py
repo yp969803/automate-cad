@@ -153,19 +153,23 @@ def run(part, ids, assembly):
                                    sel={str(s["id"]): s["ids"] for s in sel}, gap_tol=gap, poses=ps))
     return res
 
-def verify(part, assembly, cand, out):
-    subprocess.run(["freecad.cmd", "-c", f"import sys; sys.path.insert(0,{CAD!r}); import verify; verify.run({part!r},{assembly!r},{cand!r},{out!r})"], check=True, stdout=subprocess.DEVNULL)
+def verify(part, assembly, cand, out, hl):
+    subprocess.run(["freecad.cmd", "-c", f"import sys; sys.path.insert(0,{CAD!r}); import verify; verify.run({part!r},{assembly!r},{cand!r},{out!r},{hl!r})"], check=True, stdout=subprocess.DEVNULL)
     return json.load(open(out))
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if a != "--no-verify"]; part, ids, asm = args[0], [int(x) for x in args[1].split(",")], args[2]
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]; part, ids, asm = args[0], [int(x) for x in args[1].split(",")], args[2]
     out = args[3] if len(args) > 3 else "cache/matches.json"
     cand = run(part, ids, asm); json.dump(cand, open("cache/candidates.json", "w"))
     print(f"{len(cand)} candidate(s) by face relations for faces {ids}")
     res = cand
     if "--no-verify" not in sys.argv and cand:  # nothing to verify -> don't load the assembly in FreeCAD
         if not (part.endswith((".step", ".stp")) and asm.endswith((".step", ".stp"))): raise SystemExit("verify needs STEP inputs (use --no-verify for JSON)")
-        res = verify(part, asm, "cache/candidates.json", out); print(f"{len(res)} verified (placed part touches the match and does not overlap the assembly)")
+        hl = "cache/highlight"; res = verify(part, asm, "cache/candidates.json", out, hl); print(f"{len(res)} verified (placed part touches the match and does not overlap the assembly)")
     else: json.dump(res, open(out, "w"), indent=1)  # --no-verify, or no candidates
+    if res and "--no-verify" not in sys.argv:
+        subprocess.run(["freecad", os.path.join(CAD, "color_step.py")], env=dict(os.environ, QT_QPA_PLATFORM="offscreen", HL_PREFIX=hl),
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=300)  # coloured STEP needs the GUI classes
+        print(f"highlight: {hl}.html (browser), {hl}.FCStd and {hl}.step" + (" (coloured)" if os.path.exists(hl + ".step") else " missing: see " + hl + ".colour.log"))
     for r in res:
         for p in r["poses"]: print(" ", r["part"], r["faces"], "|", p["joint"], "|", "gap", round(p["gap"], 3), "overlap", "n/a (open shell)" if p["overlap"] is None else round(p["overlap"], 3))

@@ -24,7 +24,7 @@ def solid_of(s):
 def same_instance(a, b):
     return len(a.Faces) == len(b.Faces) and abs(abs(a.Volume) - abs(b.Volume)) < 1e-6 * max(1, abs(a.Volume))
 
-def run(part_step, asm_step, cand_json, out_json):
+def run(part_step, asm_step, cand_json, out_json, hl=None):
     part = shape_of(descriptors.load(part_step)[1][0])
     shapes = {o.Name: shape_of(o) for o in descriptors.load(asm_step)[1]}
     others = {n: s for n, s in shapes.items() if not same_instance(s, part)}
@@ -51,3 +51,5 @@ def run(part_step, asm_step, cand_json, out_json):
             keep.append(dict(p, gap=gap, overlap=over, open_parts_unchecked=open_parts))
         if keep: res.append(dict(m, poses=keep))
     json.dump(res, open(out_json, "w"), indent=1)
+    if hl and res:  # reuse the shapes already loaded for the highlight files
+        import highlight; highlight.write(part, shapes, res, hl)
