@@ -55,6 +55,9 @@ See [alternatives.md](alternatives.md) for pros and cons of each approach and to
 8. If time: freeform point-cloud fallback (Open3D). Otherwise describe it in the write-up as the extension.
 9. Write-up: approach, alternatives considered and why rejected, tolerances, limits (threads, freeform accuracy, symmetric shapes, mirrored parts, very loose fits).
 
+## Assumptions
+- **No split faces.** One physical surface = one face in the STEP file, on both the selected part and the assembly. No face-merge step and no point-cloud rerun for split faces. If the vice turns out to have many splits, revisit (merge touching faces on the same surface first).
+
 ## Open items
 - Need the key/part STEP and the face IDs used in the Notion images (only screenshots there). Otherwise pick faces ourselves in FreeCAD.
 - Tolerance values (default: 0.1 mm absolute, 1° angular, radius clearance up to ~2%).
