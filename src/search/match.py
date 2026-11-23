@@ -1,12 +1,13 @@
 """Find where selected faces of a part mate in an assembly.
-Usage: python3 src/match.py part.(step|json) 1,2,3 assembly.(step|json) [out.json]
-STEP inputs are converted to descriptor JSON with FreeCAD (src/descriptors.py).
+Usage: python3 src/search/match.py part.(step|json) 1,2,3 assembly.(step|json) [out.json]
+STEP inputs are converted to descriptor JSON with FreeCAD (src/cad/descriptors.py).
 Matching = complementary faces (opposite normals, convex<->concave, same size) that keep the
 selection's pairwise relations (angles, offsets, axis distances) on ONE part. Pose + verify: not yet.
 """
 import sys, os, json, itertools, subprocess
 import numpy as np
 
+CAD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cad")  # modules that run inside freecad.cmd
 ANG = 0.0175   # ~1 deg, on dot products
 DIST = 0.1     # mm
 CLEAR = 0.02   # radius clearance, 2%
@@ -14,24 +15,25 @@ CLEAR = 0.02   # radius clearance, 2%
 def to_json(p):
     if p.endswith(".json"): return p
     out = "cache/" + os.path.basename(p) + ".json"
-    if not os.path.exists(out) or os.path.getmtime(out) < max(os.path.getmtime(p), os.path.getmtime("src/descriptors.py")):
-        subprocess.run(["freecad.cmd", "-c", f"import sys; sys.path.insert(0,'src'); import descriptors; descriptors.run({p!r},{out!r})"], check=True, stdout=subprocess.DEVNULL)
+    if not os.path.exists(out) or os.path.getmtime(out) < max(os.path.getmtime(p), os.path.getmtime(os.path.join(CAD, "descriptors.py"))):
+        subprocess.run(["freecad.cmd", "-c", f"import sys; sys.path.insert(0,{CAD!r}); import descriptors; descriptors.run({p!r},{out!r})"], check=True, stdout=subprocess.DEVNULL)
     return out
 
 def kind(f):  # geometric role used by pair invariants
     t = f["type"]
-    return "P" if t == "Plane" else "S" if t == "Sphere" else "L" if t in ("Cylinder", "Cone", "Toroid") else None
+    return "P" if t == "Plane" else "S" if t == "Sphere" else "L" if t in ("Cylinder", "Cone", "Toroid") else "F" if t in ("BSplineSurface", "SurfaceOfExtrusion") else None
 
 def vec(f, k): return np.array(f[k])
 
 def complementary(s, c):
-    if s["type"] != c["type"] or kind(s) is None: return False
+    if s["type"] != c["type"] or kind(s) in (None, "F"): return False  # freeform faces go through freeform.py
     if s["type"] == "Plane": return True  # facing is checked by the pair relations: the part is not in place yet
-    if s["type"] == "Toroid" or s["convex"] == c["convex"]: return False  # torus: no rule yet
+    if s["convex"] == c["convex"]: return False
+    if s["type"] == "Toroid": return all(abs(s[k] - c[k]) <= CLEAR * s[k] + 1e-6 for k in ("major", "minor"))
     if s["type"] in ("Cylinder", "Sphere"): return abs(s["radius"] - c["radius"]) <= CLEAR * s["radius"] + 1e-6
     if s["type"] == "Cone": return abs(abs(s["semi_angle"]) - abs(c["semi_angle"])) < ANG and \
         s["slant"][0] <= c["slant"][1] + DIST and c["slant"][0] <= s["slant"][1] + DIST  # angle sign = axis direction; bands from the apex must overlap
-    return False  # Toroid: no rule yet
+    return False
 
 def inv(a, b):
     """Rotation-invariant relation of faces a,b. Returns (list of values, list of signs): a candidate pair
@@ -135,6 +137,10 @@ def run(part, ids, assembly):
         if g not in sel: sel.append(g)
     for s in sel:
         if kind(s) is None: raise SystemExit(f"Face {s['id']} is {s['type']}: no matching rule for this surface type yet")
+    if any(kind(s) == "F" for s in sel):  # freeform face selected: align point clouds instead of comparing surface types
+        if not (part.endswith((".step", ".stp")) and assembly.endswith((".step", ".stp"))): raise SystemExit("freeform fallback needs STEP inputs")
+        import freeform
+        return freeform.find(part, assembly, sel, same_part, P)
     gap = DIST + CLEAR * max([s.get("radius", 0) for s in sel])  # contact tolerance used by verify
     res = []
     for q in A:
@@ -148,7 +154,7 @@ def run(part, ids, assembly):
     return res
 
 def verify(part, assembly, cand, out):
-    subprocess.run(["freecad.cmd", "-c", f"import sys; sys.path.insert(0,'src'); import verify; verify.run({part!r},{assembly!r},{cand!r},{out!r})"], check=True, stdout=subprocess.DEVNULL)
+    subprocess.run(["freecad.cmd", "-c", f"import sys; sys.path.insert(0,{CAD!r}); import verify; verify.run({part!r},{assembly!r},{cand!r},{out!r})"], check=True, stdout=subprocess.DEVNULL)
     return json.load(open(out))
 
 if __name__ == "__main__":

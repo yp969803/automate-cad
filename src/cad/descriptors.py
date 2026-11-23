@@ -1,5 +1,5 @@
 """Load a STEP assembly in FreeCAD and dump one descriptor per face (global coords) to JSON.
-Run (any STEP file): freecad.cmd -c "import sys; sys.path.insert(0,'src'); import descriptors; descriptors.run('in.step','out.json')"
+Run (any STEP file): freecad.cmd -c "import sys; sys.path.insert(0,'src/cad'); import descriptors; descriptors.run('in.step','out.json')"
 """
 import sys, json, math, time, collections
 import numpy as np
@@ -39,7 +39,8 @@ def samples(f, k=7, normals=True):
 
 def classify_bspline(f):
     """Return analytic descriptor fields if the B-spline is really a plane/sphere/cylinder, else None."""
-    P, N = samples(f)
+    try: P, N = samples(f)
+    except Exception: return None  # no normal at a singular point: leave the face as it is
     c, n, e = fit_plane(P)
     if e < TOL: return dict(type="Plane", point=c.tolist(), axis=n.tolist())
     s = fit_sphere(P)
@@ -72,9 +73,12 @@ def describe(f):
     elif t == "Sphere":
         d.update(point=list(sf.Center), radius=sf.Radius, convex=is_convex(nm, pm, sf.Center))
     elif t == "Toroid":
-        d.update(point=list(sf.Center), axis=list(sf.Axis), major=sf.MajorRadius, minor=sf.MinorRadius)
+        rel = np.array(pm) - np.array(sf.Center); ax = np.array(sf.Axis); rp = rel - (rel @ ax) * ax
+        tube = np.array(sf.Center) + sf.MajorRadius * rp / max(np.linalg.norm(rp), 1e-9)  # centre of the tube circle under pm
+        d.update(point=list(sf.Center), apex=list(sf.Center), axis=list(sf.Axis), major=sf.MajorRadius, minor=sf.MinorRadius,
+                 convex=is_convex(nm, pm, tube))  # `apex` = the point that pins position, like a cone apex
     elif t in ("BSplineSurface", "SurfaceOfExtrusion"):
-        r = classify_bspline(f) if t == "BSplineSurface" else None
+        r = classify_bspline(f)  # extrusions of a line/arc are really planes/cylinders; true extrusions stay freeform
         if r:
             d["was"] = t; d.update(r)
             if r["type"] != "Plane": d["convex"] = is_convex(nm, pm, r["point"], r.get("axis"))
@@ -83,7 +87,7 @@ def describe(f):
 
 def same_surface(a, b):
     """True if descriptors a, b lie on one analytic surface with the same material side."""
-    if a["type"] != b["type"] or a["type"] not in ("Plane", "Cylinder", "Cone", "Sphere"): return False
+    if a["type"] != b["type"] or a["type"] not in ("Plane", "Cylinder", "Cone", "Sphere", "Toroid"): return False
     pa, pb, t = np.array(a["point"]), np.array(b["point"]), a["type"]
     if t == "Plane":
         na, nb = np.array(a["axis"]), np.array(b["axis"])
@@ -91,6 +95,7 @@ def same_surface(a, b):
     if a["convex"] != b["convex"]: return False
     if t == "Sphere": return np.linalg.norm(pb - pa) < TOL and abs(a["radius"] - b["radius"]) < TOL
     ua, ub = np.array(a["axis"]), np.array(b["axis"]); d = pb - pa
+    if t == "Toroid": return np.linalg.norm(d) < TOL and abs(abs(ua @ ub) - 1) < 1e-6 and abs(a["major"] - b["major"]) < TOL and abs(a["minor"] - b["minor"]) < TOL
     if abs(abs(ua @ ub) - 1) > 1e-6 or np.linalg.norm(d - (d @ ua) * ua) > TOL: return False
     return abs(a["radius"] - b["radius"]) < TOL if t == "Cylinder" else abs(a["semi_angle"] - b["semi_angle"]) < 1e-6
 

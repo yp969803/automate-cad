@@ -27,3 +27,14 @@ export([("plate", blocked), ("plug", Part.makeCylinder(3, 10, V(20, 20, 0)))], "
 plug = Part.makeCone(5, 3, 10)
 socket = Part.makeBox(30, 30, 20, V(100, 0, 0)).cut(Part.makeCone(5, 3, 10, V(115, 15, 4)))
 export([("plug", plug)], "cache/plug.step"); export([("socket", socket)], "cache/test_cone.step")
+# torus: ring (major 10, minor 2) and a block with a matching toroidal void
+export([("ring", Part.makeTorus(10, 2))], "cache/ring.step")
+export([("block", Part.makeBox(40, 40, 10, V(300, 0, 0)).cut(Part.makeTorus(10, 2, V(320, 20, 5)))), ("block_small_groove", Part.makeBox(40, 40, 10, V(400, 0, 0)).cut(Part.makeTorus(10, 1, V(420, 20, 5))))], "cache/test_torus.step")
+# freeform: ellipsoid knob (semi-axes 8,8,12) vs blocks with an enclosed ellipsoidal void, rotated 40 deg about X
+def ellipsoid(rz, centre, rot=0):
+    m = FreeCAD.Matrix(); m.scale(1, 1, rz / 8)
+    e = Part.makeSphere(8).transformGeometry(m)
+    e.rotate(V(0, 0, 0), V(1, 0, 0), rot); e.translate(centre); return e
+export([("knob", ellipsoid(12, V(0, 0, 0)))], "cache/knob.step")
+export([("blockMatch", Part.makeBox(60, 60, 60, V(500, 0, 0)).cut(ellipsoid(12, V(530, 30, 30), 40))),
+        ("blockWrong", Part.makeBox(60, 60, 60, V(600, 0, 0)).cut(ellipsoid(9.6, V(630, 30, 30), 40)))], "cache/test_freeform.step")

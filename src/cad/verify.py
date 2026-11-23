@@ -34,9 +34,9 @@ def run(part_step, asm_step, cand_json, out_json):
         target = shapes[m["object"]]; keep = []
         for p in m["poses"]:
             mat = FreeCAD.Matrix(*[x for row in p["matrix"] for x in row]); moved = part.copy(); moved.transformShape(mat)
-            gap = 0.0
+            gap = 0.0; mf, tf = moved.Faces, target.Faces  # fetch the face lists once: `.Faces` rebuilds the list on each access
             for sid, ids in m["sel"].items():
-                sf = [moved.Faces[i - 1] for i in ids]; cf = [target.Faces[i - 1] for i in m["faces"][sid]]
+                sf = [mf[i - 1] for i in ids]; cf = [tf[i - 1] for i in m["faces"][sid]]
                 g = min(a.distToShape(b)[0] for a in sf for b in cf); gap = max(gap, g)
                 if g > m["gap_tol"] or not any(grown(a, m["gap_tol"]).intersect(b.BoundBox) for a in sf for b in cf): gap = None; break
             if gap is None: continue

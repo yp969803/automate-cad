@@ -1,5 +1,5 @@
 """Save one leaf part of an assembly (by object name, from the descriptor JSON) as its own STEP, in world placement.
-Usage (freecad.cmd): extract_part.run('asm.step', 'Part__Feature036', 'out.step')"""
+Usage (freecad.cmd, with src/cad and src/tools on sys.path): extract_part.run('asm.step', 'Part__Feature036', 'out.step')"""
 import FreeCAD, Import, Part
 import descriptors
 
