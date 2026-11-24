@@ -27,5 +27,31 @@
    4
   ],
   "expect": "2 matches on part 'housing' (the two dome pockets, found by point-cloud alignment); 'decoy_block' (taller pocket) must not match"
+ },
+ "keyed_shaft": {
+  "select": [
+   3,
+   4,
+   5
+  ],
+  "select_hub": [
+   3,
+   4,
+   6
+  ],
+  "expect": "both selections: 3 matches, 'shaft_a' exact/interference (8.0 keyway), 'shaft_b' and 'hub' sliding/clearance (8.2 keyways); 'shaft_wrong' (10.0) must not match. The key is symmetric, so it also fits turned upside down: selection A (sides+bottom) fits the hub keyway with its bottom against the ceiling, B (sides+top) fits the shaft keyways with its top on the floor"
+ },
+ "pulley_shaft": {
+  "select": [
+   8
+  ],
+  "expect": "2 matches: 'motor' shaft R12.0 (exact/interference) and 'countershaft' R11.9 (sliding/clearance); 'fan_shaft' (R10) and 'idler_shaft' (R16) must not match"
+ },
+ "pulley_belt": {
+  "select": [
+   3,
+   5
+  ],
+  "expect": "1 sliding/clearance match on 'v_belt' (the two groove flanks against the belt's flanks, 0.1 mm clearance); 'flat_belt' and 'shallow_belt' (different V angle) must not match"
  }
 }
