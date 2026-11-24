@@ -117,7 +117,7 @@ Limits: the class depends on one threshold; a real exact fit modelled with a sma
 - **Tolerances**: `CLR = 0.5 mm` was tuned on one socket. Could be derived from the selection size or exposed as an option.
 - **Missing pair rules**: sphere↔cylinder and sphere↔cone (ball in a bore or tapered seat), cones with different angles, mirrored parts.
 - **Freeform**: tested on one synthetic shape only. Needs a real freeform mate, and partial-contact seats can fail the 85 % test.
-- **Face IDs**: confirm the `FaceN` ids used here match what a user sees in the FreeCAD viewer (assumed, not checked).
+- **Face IDs**: our ids are FreeCAD's `FaceN` numbers (checked in the API: `getElement('FaceN')` is `Faces[N-1]` on every face tried); not compared by eye in the FreeCAD GUI, and the ids in the assignment's screenshot come from a tool we cannot see.
 
 **Speed and robustness**
 - Cache sampled point clouds per assembly (sampling is repeated on every freeform search).
