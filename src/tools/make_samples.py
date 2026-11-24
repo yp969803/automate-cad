@@ -43,8 +43,8 @@ for ang in (0, 90, 180, 270):
 def decoy(w, x): return box(x, 0, 0, 40, 40, 20).cut(box(x + 20 - w / 2, 20 - w / 2, 0, w, w, 20))
 # select = the 4 long side faces of the key tip
 info["chuck_key"] = dict(select=part_file("chuck_key", key, lambda f: (planes(f, (1, 0, 0)) or planes(f, (0, 1, 0))) and 100 < f.Area < 115),
-    expect="4 matches on part 'chuck' (one per socket); decoys 'blank_narrow' (7.0 hole) and 'blank_loose' (9.5 hole) must not match")
-export([("chuck", chuck), ("blank_narrow", decoy(7.0, 200)), ("blank_loose", decoy(9.5, 300))], OUT + "chuck_key_assembly.step")
+    expect="4 sliding/clearance matches on 'chuck' (one per socket, 8.2 vs 7.8) and 1 exact/interference match on 'blank_exact' (7.8 hole); decoys 'blank_narrow' (7.0 hole) and 'blank_loose' (9.5 hole) must not match")
+export([("chuck", chuck), ("blank_narrow", decoy(7.0, 200)), ("blank_loose", decoy(9.5, 300)), ("blank_exact", decoy(7.8, 400))], OUT + "chuck_key_assembly.step")
 
 # 2. Bench vice: sliding jaw (channel 24.4 x 8.3 underneath) on the body's rail (24 x 8); decoy guide with a 30 wide rail.
 #    Sizes avoid coincidences (body slab 20 thick, fixed jaw 20 thick) that would let the channel straddle other parts.
@@ -58,15 +58,16 @@ info["vice_jaw"] = dict(select=part_file("vice_jaw", jaw(), lambda f: type(f.Sur
     expect="1 match on part 'body' (rail walls + top); fixed_jaw/screw/guide must not match. Jaw is also present seated in the assembly (ignored, identical part)")
 export([("body", body), ("fixed_jaw", fixed_jaw), ("jaw_seated", seated), ("guide_wide_rail", guide)], OUT + "vice_assembly.step")
 
-# 3. Pin + plates: pin R5 with a head; plate has 4 holes R5.1, decoy plates have R8 / R3 holes, washer has a R5.05 hole
+# 3. Pin + plates: pin R5 with a head; plate has 4 holes R5.1, decoy plates have R8 / R3 holes, washer has a R5.2 hole, dowel plate has R5.0 and R4.98 holes
 pin = Part.makeCylinder(5, 25, V(0, 0, 4)).fuse(Part.makeCylinder(8, 4))
 plate = box(0, 0, 0, 120, 60, 10)
 for x in (20, 50, 80, 110): plate = plate.cut(Part.makeCylinder(5.1, 10, V(x, 30, 0)))
 decoy_plate = box(0, 100, 0, 60, 40, 10).cut(Part.makeCylinder(8, 10, V(15, 120, 0))).cut(Part.makeCylinder(3, 10, V(45, 120, 0)))
-washer = Part.makeCylinder(7, 2, V(200, 0, 0)).cut(Part.makeCylinder(5.05, 2, V(200, 0, 0)))
+washer = Part.makeCylinder(7, 2, V(200, 0, 0)).cut(Part.makeCylinder(5.2, 2, V(200, 0, 0)))
 info["pin_plate"] = dict(select=part_file("pin_plate", pin, lambda f: type(f.Surface).__name__ == "Cylinder" and abs(f.Surface.Radius - 5) < 1e-6),
-    expect="5 matches: 4 holes in 'plate' and the 'washer' hole; decoy plate holes (R8, R3) must not match")
-export([("plate", plate), ("decoy_plate", decoy_plate), ("washer", washer)], OUT + "pin_plate_assembly.step")
+    expect="7 matches: sliding/clearance: 4 holes in 'plate' (R5.1) and the 'washer' hole (R5.2); exact/interference: the 2 holes in 'dowel_plate' (R5.0 exact, R4.98 press fit); decoy plate holes (R8, R3) must not match")
+dowel_plate = box(0, 200, 0, 60, 40, 10).cut(Part.makeCylinder(5.0, 10, V(15, 220, 0))).cut(Part.makeCylinder(4.98, 10, V(45, 220, 0)))  # exact and press fit
+export([("plate", plate), ("decoy_plate", decoy_plate), ("washer", washer), ("dowel_plate", dowel_plate)], OUT + "pin_plate_assembly.step")
 
 # 4. Freeform: a part with an elliptical dome (B-spline surface, semi-axes 10 x 6 x 8) on a round base;
 #    the housing has two matching dome pockets (one turned 90 deg); the decoy block has a taller pocket (10 x 6 x 11)

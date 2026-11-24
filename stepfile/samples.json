@@ -6,7 +6,7 @@
    6,
    8
   ],
-  "expect": "4 matches on part 'chuck' (one per socket); decoys 'blank_narrow' (7.0 hole) and 'blank_loose' (9.5 hole) must not match"
+  "expect": "4 sliding/clearance matches on 'chuck' (one per socket, 8.2 vs 7.8) and 1 exact/interference match on 'blank_exact' (7.8 hole); decoys 'blank_narrow' (7.0 hole) and 'blank_loose' (9.5 hole) must not match"
  },
  "vice_jaw": {
   "select": [
@@ -20,7 +20,7 @@
   "select": [
    1
   ],
-  "expect": "5 matches: 4 holes in 'plate' and the 'washer' hole; decoy plate holes (R8, R3) must not match"
+  "expect": "7 matches: sliding/clearance: 4 holes in 'plate' (R5.1) and the 'washer' hole (R5.2); exact/interference: the 2 holes in 'dowel_plate' (R5.0 exact, R4.98 press fit); decoy plate holes (R8, R3) must not match"
  },
  "freeform_dome": {
   "select": [

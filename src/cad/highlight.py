@@ -29,7 +29,7 @@ def write(part, shapes, res, prefix):
             sel = Part.makeCompound([placed.Faces[i - 1] for v in m["sel"].values() for i in v])
             add(f"match{n}_pose{j}_part", placed); add(f"match{n}_pose{j}_selected", sel)
             meshes.append(mesh(placed, "part", n, "placed part")); meshes.append(mesh(sel, "sel", n, "selected faces"))
-        matches.append(dict(label=f"{m['part']} | faces {sorted(m['faces'].items())} | {m['poses'][0]['joint']}"))
+        matches.append(dict(label=f"{m['part']} | faces {sorted(m['faces'].items())} | {m['poses'][0].get('fit', '')} (gap {m['poses'][0].get('gap', 0):.2f} mm) | {m['poses'][0]['joint']}"))
     doc.recompute(); (os.path.exists(prefix + ".FCStd") and os.remove(prefix + ".FCStd")); doc.saveAs(prefix + ".FCStd")  # no .FCBak clutter
     open(prefix + ".html", "w").write(HTML.replace("__DATA__", json.dumps(dict(meshes=meshes, matches=matches))))
 

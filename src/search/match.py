@@ -34,7 +34,7 @@ def complementary(s, c):
     if s["type"] == "Plane": return True  # facing is checked by the pair relations: the part is not in place yet
     if s["convex"] == c["convex"]: return False
     if s["type"] == "Toroid": return all(abs(s[k] - c[k]) <= CLEAR * s[k] + 1e-6 for k in ("major", "minor"))
-    if s["type"] in ("Cylinder", "Sphere"): return abs(s["radius"] - c["radius"]) <= CLEAR * s["radius"] + 1e-6
+    if s["type"] in ("Cylinder", "Sphere"): return abs(s["radius"] - c["radius"]) <= max(CLEAR * s["radius"], CLR / 2) + 1e-6  # relative for big radii, CLR/2 for small ones
     if s["type"] == "Cone": return abs(abs(s["semi_angle"]) - abs(c["semi_angle"])) < ANG and \
         s["slant"][0] <= c["slant"][1] + DIST and c["slant"][0] <= s["slant"][1] + DIST  # angle sign = axis direction; bands from the apex must overlap
     return False
@@ -224,4 +224,4 @@ if __name__ == "__main__":
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=300)  # coloured STEP needs the GUI classes
         print(f"highlight: {hl}.html (browser), {hl}.FCStd and {hl}.step" + (" (coloured)" if os.path.exists(hl + ".step") else " missing: see " + hl + ".colour.log"))
     for r in res:
-        for p in r["poses"]: print(" ", r["part"], r["faces"], "|", p["joint"], "|", "gap", round(p["gap"], 3), "overlap", "n/a (open shell)" if p["overlap"] is None else round(p["overlap"], 3))
+        for p in r["poses"]: print(" ", r["part"], r["faces"], "|", p["fit"] if "fit" in p else "", "|", p["joint"], "|", "gap", round(p["gap"], 3), "overlap", "n/a (open shell)" if p["overlap"] is None else round(p["overlap"], 3))

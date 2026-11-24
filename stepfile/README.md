@@ -8,12 +8,12 @@ Run: `.venv/bin/python src/search/match.py stepfile/<case>_part.step <faces> ste
 
 | Case | Select faces | Expected | Tests |
 |---|---|---|---|
-| `chuck_key` | `1,2,6,8` | 4 matches on `chuck` (one per socket, 4 poses each: the square tip fits 4 ways round); `blank_narrow` (7.0 hole) and `blank_loose` (9.5 hole) must not match | all instances, sliding-fit clearance (7.8 key, 8.2 sockets), too-narrow and too-loose rejection |
-| `vice_jaw` | `5,6,7` | 1 match on `body` (rail walls + top); `fixed_jaw` and `guide_wide_rail` must not match | female part on a male rail, clearance (24.4 channel on a 24 rail), jaw already seated in the assembly is ignored |
-| `pin_plate` | `1` | 5 matches: 4 holes in `plate` and the `washer` hole; `decoy_plate` (R8, R3 holes) must not match | cylinder fit with 2 % radius clearance, several instances on one part |
-| `freeform_dome` | `4` | 2 matches on `housing` (the two dome pockets, one turned 90 deg); `decoy_block` (taller pocket) must not match | freeform fallback (point-cloud alignment), several instances of a freeform seat |
+| `chuck_key` | `1,2,6,8` | 4 `sliding/clearance` matches on `chuck` (one per socket, 4 poses each: the square tip fits 4 ways round) and 1 `exact/interference` match on `blank_exact` (7.8 hole); `blank_narrow` (7.0 hole) and `blank_loose` (9.5 hole) must not match | all instances, exact vs clearance (7.8 key, 8.2 sockets, 7.8 blank), too-narrow and too-loose rejection |
+| `vice_jaw` | `5,6,7` | 1 `sliding/clearance` match on `body` (rail walls + top); `fixed_jaw` and `guide_wide_rail` must not match | female part on a male rail, clearance (24.4 channel on a 24 rail), jaw already seated in the assembly is ignored |
+| `pin_plate` | `1` | 7 matches: `sliding/clearance` for 4 holes in `plate` (R5.1) and the `washer` hole (R5.2); `exact/interference` for the 2 holes in `dowel_plate` (R5.0 and R4.98 press fit); `decoy_plate` (R8, R3 holes) must not match | cylinder fits across the exact / interference / clearance range, several instances on one part |
+| `freeform_dome` | `4` | 2 `exact/interference` matches on `housing` (the two dome pockets, one turned 90 deg); `decoy_block` (taller pocket) must not match | freeform fallback (point-cloud alignment), several instances of a freeform seat |
 
 Notes
 - Sizes avoid coincidences on purpose (for example the vice rail is 24 wide because 20 mm appears elsewhere and the channel could straddle those parts).
-- Checked results (last run): chuck_key 4, vice_jaw 1, pin_plate 5, freeform_dome 2 verified matches; decoys rejected.
+- Checked results (last run): chuck_key 5 (4 clearance + 1 exact), vice_jaw 1 (clearance), pin_plate 7 (5 clearance + 2 exact/interference), freeform_dome 2 (exact) verified matches; decoys rejected. Each pose in the output has a `fit` field.
 - The seated position of a part along a free direction is a centred guess, so the chuck key's tip is shorter (14 mm) than its sockets are deep (15 mm).

@@ -9,6 +9,7 @@ import FreeCAD, Part
 import descriptors
 
 OVERLAP = 0.01
+EXACT = 0.05  # mm: largest gap still called an exact/interference fit (faces nearly coincide); above it the fit is sliding/clearance
 
 def shape_of(o):
     s = o.Shape.copy(); s.Placement = o.getGlobalPlacement(); return s
@@ -49,7 +50,7 @@ def run(part_step, asm_step, cand_json, out_json):
                         except Exception: p["unchecked"] = True
                         if over > limit: break  # already rejected: skip the remaining (slow) booleans
                 if over > limit: continue
-            keep.append(dict(p, gap=gap, overlap=over, open_parts_unchecked=open_parts))
+            keep.append(dict(p, gap=gap, overlap=over, open_parts_unchecked=open_parts, fit="exact/interference" if gap <= EXACT else "sliding/clearance"))
         if keep: res.append(dict(m, poses=keep))
     json.dump(res, open(out_json, "w"), indent=1)
 

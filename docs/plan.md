@@ -69,15 +69,24 @@ Alternatives considered (pros and cons): [alternatives.md](alternatives.md).
 - Details and a speed bug: [freeform-sampling.md](freeform-sampling.md).
 - Limits: free motion (symmetry/slide) not analysed; a seat touched only in a small patch can fail the 85 % test; slow on big parts.
 
+## Fit classification (exact vs sliding)
+The assignment asks to tell an exact/interference fit (key in slot: faces nearly coincide) from a sliding/clearance fit (vice jaw: faces parallel or coaxial with a controlled gap, never coincident). After the part is placed, `verify.py` measures the **largest gap between a selected face and its matched face** and labels the pose:
+- `exact/interference`: gap ≤ `EXACT = 0.05 mm` (faces coincide; a small overlap from a press fit is allowed, within the 1 % overlap limit).
+- `sliding/clearance`: gap > 0.05 mm (up to the contact tolerance); the gap is reported.
+The free motion left (slides, spins, planar...) is reported separately as `joint`. Every pose in `matches.json` carries `fit`, `gap`, `overlap` and `joint`.
+Examples (generated samples): key in a slot of its own width → exact (0.0 mm); same key in a slot 0.4 mm wider → clearance (0.2 mm per side); pin in R5.0 / R4.98 holes → exact / interference (0.0 / 0.02 mm); pin in R5.1 / R5.2 holes → clearance (0.1 / 0.2 mm); vice jaw on its rail → clearance (0.2 mm).
+Limits: the class depends on one threshold; a real exact fit modelled with a small clearance (the lathe's pinion sockets are 0.2 mm per side) is reported as clearance, which is what the geometry says. The gap is measured after centring, so a part resting on one side shows half of the total clearance.
+
 ## Tolerances (all in `search/match.py`)
 | Name | Value | Meaning |
 |---|---|---|
 | `ANG` | 0.0175 (~1°) | angle tolerance on dot products |
 | `DIST` | 0.1 mm | distance tolerance |
-| `CLEAR` | 2 % | radius clearance for cylinders/spheres/tori |
+| `CLEAR` | 2 % | radius clearance for cylinders/spheres/tori; small radii get `CLR/2` (0.25 mm) instead, so a R5 pin matches a R5.2 hole |
 | `CLR` | 0.5 mm | width clearance for plane pairs (tuned on the real key socket: 8.2 mm vs 7.8 mm) |
 | contact gap | `DIST + CLR/2 + CLEAR x radius` | allowed gap in verify |
 | overlap | 1 % of part volume | allowed interference |
+| `EXACT` (`cad/verify.py`) | 0.05 mm | largest gap still called an exact/interference fit |
 
 ## Results
 - **Real chuck key** (`Key`, faces 2, 4, 16, 18 = the square tip, 7.8 mm): 553 candidates by relations → **3 verified, on `Pinion M1.8 10T`, `10T001`, `10T002`** (socket 8.2 mm, gap 0.2 mm per side, joint "slides along one axis"). This matches the 3 parts highlighted in the assignment. About 4 minutes on the lathe.

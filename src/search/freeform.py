@@ -7,6 +7,7 @@ import numpy as np
 import open3d as o3d
 
 reg = o3d.pipelines.registration
+o3d.utility.random.seed(0)  # RANSAC is random: fixed seed so a rerun gives the same result
 CAD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cad")  # modules that run inside freecad.cmd
 FIT, RMSE, MAX_INSTANCES = 0.85, 0.6, 8  # inlier fraction, rmse in voxels
 
