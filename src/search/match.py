@@ -24,7 +24,10 @@ def kind(f):  # geometric role used by pair invariants
     t = f["type"]
     return "P" if t == "Plane" else "S" if t == "Sphere" else "L" if t in ("Cylinder", "Cone", "Toroid") else "F" if t in ("BSplineSurface", "SurfaceOfExtrusion") else None
 
-def vec(f, k): return np.array(f[k])
+def vec(f, k):
+    c = f.get("_" + k)  # cached numpy copy: rebuilding it millions of times was the main cost of the search
+    if c is None: c = f["_" + k] = np.array(f[k])
+    return c
 
 def complementary(s, c):
     if s["type"] != c["type"] or kind(s) in (None, "F"): return False  # freeform faces go through freeform.py
@@ -60,14 +63,14 @@ def inv(a, b):
     dist = np.linalg.norm(d - (d @ ua) * ua) if np.linalg.norm(c) < ANG else abs(d @ c) / np.linalg.norm(c)
     return v + [dist], [1, 1]
 
-def pair_ok(sa, sb, ca, cb):
-    (v, sg), (w, _) = inv(sa, sb), inv(ca, cb)
+def pair_ok(sa, sb, ca, cb, vs=None):
+    (v, sg), (w, _) = vs or inv(sa, sb), inv(ca, cb)  # vs: the selection's own pair relation, computed once by search()
     if len(v) != len(w): return False
     pp = kind(sa) == kind(sb) == "P"
     for i, (x, y, g) in enumerate(zip(v, w, sg + [1] * 9)):
         diff = y - x * g
         if i == 0: lo, hi = -ANG, ANG
-        elif pp: lo, hi = (-DIST, CLR) if x < 0 else (-CLR, DIST)  # parallel planes: x<0 = faces point away (part is male): the match may be wider
+        elif pp: lo, hi = -DIST, CLR  # parallel planes: diff = (female width - male width), whichever side the selection is on
         else: lo, hi = -DIST, DIST
         if not lo <= diff <= hi: return False
     return True
@@ -76,15 +79,22 @@ def search(sel, faces):
     """All assignments sel[i] -> faces[j] (one part) with complementary faces and consistent pair relations."""
     cands = [[c for c in faces if complementary(s, c)] for s in sel]
     normals = [np.array([c["axis"] for c in cs]) if kind(s) == "P" and cs else None for s, cs in zip(sel, cands)]
+    points = [np.array([c["point"] for c in cs]) if kind(s) == "P" and cs else None for s, cs in zip(sel, cands)]
+    selinv = {(j, i): inv(sel[j], sel[i]) for i in range(len(sel)) for j in range(i)}
     out = []
     def rec(i, chosen):
         if i == len(sel): out.append(tuple(c["id"] for c in chosen)); return
-        ok = np.ones(len(cands[i]), bool)  # vectorised first cut: plane pairs must keep the angle between normals
+        ok = np.ones(len(cands[i]), bool)  # vectorised first cut for plane pairs: angle between normals and, if parallel, the offset
         for j, d in enumerate(chosen):
-            if normals[i] is not None and kind(sel[j]) == "P": ok &= np.abs(normals[i] @ vec(d, "axis") - vec(sel[j], "axis") @ vec(sel[i], "axis")) <= ANG
+            if normals[i] is not None and kind(sel[j]) == "P":
+                v, sg = selinv[(j, i)]; nd = vec(d, "axis")
+                ok &= np.abs(normals[i] @ nd - v[0]) <= ANG
+                if len(v) == 2:
+                    diff = (points[i] - vec(d, "point")) @ nd - v[1] * sg[1]
+                    ok &= (diff >= -DIST) & (diff <= CLR)
         for k in np.flatnonzero(ok):
             c = cands[i][k]
-            if all(c["id"] != d["id"] and pair_ok(sel[j], sel[i], d, c) for j, d in enumerate(chosen)): rec(i + 1, chosen + [c])
+            if all(c["id"] != d["id"] and pair_ok(sel[j], sel[i], d, c, selinv[(j, i)]) for j, d in enumerate(chosen)): rec(i + 1, chosen + [c])
     rec(0, []); return out
 
 def same_part(p, q):
@@ -141,6 +151,16 @@ def poses(sel, cands):
         if key not in seen: seen.add(key); out.append(dict(matrix=M.tolist(), free=[nr, len(N)], joint=LABEL.get((nr, len(N)), f"{nr} rotation / {len(N)} translation free")))
     return out
 
+def touches(M, sel, cands, tol):
+    """Cheap test: every selected face's box, moved by M, still overlaps its matched face's box (grown by tol).
+    Boxes are loose, so this never rejects a real fit; it drops chance matches far from the faces."""
+    M = np.array(M)
+    for a, c in zip(sel, cands):
+        b = a["bbox"]; pts = np.array([[x, y, z] for x in (b[0], b[3]) for y in (b[1], b[4]) for z in (b[2], b[5])]) @ M[:3, :3].T + M[:3, 3]
+        lo, hi = pts.min(0), pts.max(0)
+        if (lo > np.array(c["bbox"][3:]) + tol).any() or (hi < np.array(c["bbox"][:3]) - tol).any(): return False
+    return True
+
 def run(part, ids, assembly):
     P = json.load(open(to_json(part)))[0]; A = json.load(open(to_json(assembly)))
     sel = []  # selected ids -> merged faces (a selection may hit several pieces of one merged face)
@@ -158,17 +178,36 @@ def run(part, ids, assembly):
     res = []
     for q in A:
         if same_part(P, q): continue  # the selected part itself
-        seen = set(); byid = {f["id"]: f for f in q["faces"]}
-        for m in search(sel, q["faces"]):
-            if frozenset(m) in seen: continue  # symmetric fits (e.g. 4 rotations) share one face set
-            seen.add(frozenset(m)); cands = [byid[c] for c in m]; ps = poses(sel, cands)
+        byid = {f["id"]: f for f in q["faces"]}
+        for m in search(sel, q["faces"]):  # every assignment is kept: symmetric ones (key both ways round) differ in pose; verify drops the bad ones
+            cands = [byid[c] for c in m]; ps = [p for p in poses(sel, cands) if touches(p["matrix"], sel, cands, gap)]
             if ps: res.append(dict(part=q["part"], object=q["name"], faces={str(s["id"]): c["ids"] for s, c in zip(sel, cands)},
                                    sel={str(s["id"]): s["ids"] for s in sel}, gap_tol=gap, poses=ps))
     return res
 
+def merge(res):
+    """Symmetric assignments of one face set are one match with several poses."""
+    merged = {}
+    for m in res:
+        key = (m["object"], frozenset(i for v in m["faces"].values() for i in v))
+        if key in merged: merged[key]["poses"] += m["poses"]
+        else: merged[key] = m
+    return list(merged.values())
+
+def freecad(code, wait=True):
+    cmd = ["freecad.cmd", "-c", f"import sys; sys.path.insert(0,{CAD!r}); import verify; {code}"]
+    return subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL) if wait else subprocess.Popen(cmd, stdout=subprocess.DEVNULL)
+
 def verify(part, assembly, cand, out, hl):
-    subprocess.run(["freecad.cmd", "-c", f"import sys; sys.path.insert(0,{CAD!r}); import verify; verify.run({part!r},{assembly!r},{cand!r},{out!r},{hl!r})"], check=True, stdout=subprocess.DEVNULL)
-    return json.load(open(out))
+    """Check candidates with real geometry in up to 4 FreeCAD processes (each ~400 MB; the overlap booleans are the slow part)."""
+    cands = json.load(open(cand)); n = max(1, min(os.cpu_count() or 1, 4, len(cands))); procs = []
+    for k in range(n):
+        json.dump(cands[k::n], open(f"cache/cand_{k}.json", "w"))
+        procs.append(freecad(f"verify.run({part!r},{assembly!r},'cache/cand_{k}.json','cache/ver_{k}.json')", wait=False))
+    if any(p.wait() for p in procs): raise SystemExit("verification failed in FreeCAD")
+    res = merge([m for k in range(n) for m in json.load(open(f"cache/ver_{k}.json"))]); json.dump(res, open(out, "w"), indent=1)
+    if res: freecad(f"verify.highlight({part!r},{assembly!r},{out!r},{hl!r})")
+    return res
 
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]; part, ids, asm = args[0], [int(x) for x in args[1].split(",")], args[2]

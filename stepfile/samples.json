@@ -1,0 +1,31 @@
+{
+ "chuck_key": {
+  "select": [
+   1,
+   2,
+   6,
+   8
+  ],
+  "expect": "4 matches on part 'chuck' (one per socket); decoys 'blank_narrow' (7.0 hole) and 'blank_loose' (9.5 hole) must not match"
+ },
+ "vice_jaw": {
+  "select": [
+   5,
+   6,
+   7
+  ],
+  "expect": "1 match on part 'body' (rail walls + top); fixed_jaw/screw/guide must not match. Jaw is also present seated in the assembly (ignored, identical part)"
+ },
+ "pin_plate": {
+  "select": [
+   1
+  ],
+  "expect": "5 matches: 4 holes in 'plate' and the 'washer' hole; decoy plate holes (R8, R3) must not match"
+ },
+ "freeform_dome": {
+  "select": [
+   4
+  ],
+  "expect": "2 matches on part 'housing' (the two dome pockets, found by point-cloud alignment); 'decoy_block' (taller pocket) must not match"
+ }
+}

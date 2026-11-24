@@ -24,7 +24,7 @@ def solid_of(s):
 def same_instance(a, b):
     return len(a.Faces) == len(b.Faces) and abs(abs(a.Volume) - abs(b.Volume)) < 1e-6 * max(1, abs(a.Volume))
 
-def run(part_step, asm_step, cand_json, out_json, hl=None):
+def run(part_step, asm_step, cand_json, out_json):
     part = shape_of(descriptors.load(part_step)[1][0])
     shapes = {o.Name: shape_of(o) for o in descriptors.load(asm_step)[1]}
     others = {n: s for n, s in shapes.items() if not same_instance(s, part)}
@@ -42,14 +42,19 @@ def run(part_step, asm_step, cand_json, out_json, hl=None):
             if gap is None: continue
             ms = solid_of(moved); over = None  # None = overlap not checked (the part is an open shell)
             if ms is not None:
-                over = 0.0
-                for n, s in solids.items():
-                    if s is not None and ms.BoundBox.intersect(s.BoundBox):
-                        try: over += abs(ms.common(s).Volume)
+                over, limit = 0.0, OVERLAP * max(abs(ms.Volume), 1e-9)
+                for n in sorted(solids, key=lambda n: n != m["object"]):  # the part holding the match first: that is where a collision usually is
+                    if solids[n] is not None and n in others and ms.BoundBox.intersect(solids[n].BoundBox):
+                        try: over += abs(ms.common(solids[n]).Volume)
                         except Exception: p["unchecked"] = True
-                if over > OVERLAP * max(abs(ms.Volume), 1e-9): continue
+                        if over > limit: break  # already rejected: skip the remaining (slow) booleans
+                if over > limit: continue
             keep.append(dict(p, gap=gap, overlap=over, open_parts_unchecked=open_parts))
         if keep: res.append(dict(m, poses=keep))
     json.dump(res, open(out_json, "w"), indent=1)
-    if hl and res:  # reuse the shapes already loaded for the highlight files
-        import highlight; highlight.write(part, shapes, res, hl)
+
+def highlight(part_step, asm_step, res_json, prefix):
+    """Write the highlight files for already verified matches (own FreeCAD run; verify.run is split over processes)."""
+    import highlight as hl
+    part = shape_of(descriptors.load(part_step)[1][0]); shapes = {o.Name: shape_of(o) for o in descriptors.load(asm_step)[1]}
+    hl.write(part, shapes, json.load(open(res_json)), prefix)
