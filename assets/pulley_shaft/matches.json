@@ -1,0 +1,184 @@
+[
+ {
+  "part": "x/motor",
+  "object": "Part__Feature",
+  "faces": {
+   "8": [
+    7
+   ]
+  },
+  "sel": {
+   "8": [
+    8
+   ]
+  },
+  "gap_tol": 0.59,
+  "poses": [
+   {
+    "matrix": [
+     [
+      -1.0,
+      -0.0,
+      0.0,
+      -300.0
+     ],
+     [
+      -0.0,
+      1.0,
+      -0.0,
+      -80.0
+     ],
+     [
+      0.0,
+      -0.0,
+      -1.0,
+      67.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 2.050973898253875e-15,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "exact/interference"
+   },
+   {
+    "matrix": [
+     [
+      1.0,
+      0.0,
+      0.0,
+      300.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      -80.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0,
+      13.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 3.2780966199468765e-15,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "exact/interference"
+   }
+  ]
+ },
+ {
+  "part": "x/countershaft",
+  "object": "Part__Feature001",
+  "faces": {
+   "8": [
+    1
+   ]
+  },
+  "sel": {
+   "8": [
+    8
+   ]
+  },
+  "gap_tol": 0.59,
+  "poses": [
+   {
+    "matrix": [
+     [
+      -1.0,
+      -0.0,
+      0.0,
+      -100.0
+     ],
+     [
+      -0.0,
+      1.0,
+      -0.0,
+      -80.0
+     ],
+     [
+      0.0,
+      -0.0,
+      -1.0,
+      67.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.09999999999999147,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "sliding/clearance"
+   },
+   {
+    "matrix": [
+     [
+      1.0,
+      0.0,
+      0.0,
+      500.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      -80.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0,
+      13.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.09999999999997419,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "sliding/clearance"
+   }
+  ]
+ }
+]

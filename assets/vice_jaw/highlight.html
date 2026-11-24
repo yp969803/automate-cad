@@ -1,0 +1,33 @@
+<!doctype html><meta charset="utf-8"><title>Matches</title>
+<style>body{margin:0;font:13px sans-serif;display:flex;height:100vh}#side{width:340px;overflow:auto;padding:8px;background:#f4f4f4;color:#222}
+#side div{margin:4px 0;cursor:pointer}#v{flex:1}small{color:#666}</style>
+<div id="side"><b id="title">Verified matches</b><br><small id="legend">grey: part holding the match - red: matched faces - blue: your part placed - green: its selected faces. Click a line to zoom.</small>
+<div id="hostsrow"><label><input type="checkbox" id="hosts" checked> show holding parts</label></div><div id="list"></div></div><div id="v"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const D = {"meshes": [{"kind": "host", "g": -1, "label": "x/body", "color": 10132122, "opacity": 0.25, "v": [0.0, -35.0, 0.0, 0.0, -35.0, 12.0, 0.0, 35.0, 0.0, 0.0, 35.0, 12.0, 150.0, -35.0, 0.0, 150.0, -35.0, 12.0, 20.0, 12.0, 12.0, 20.0, -12.0, 12.0, 150.0, -12.0, 12.0, 150.0, 35.0, 12.0, 150.0, 12.0, 12.0, 150.0, 35.0, 0.0, 20.0, 12.0, 20.0, 150.0, 12.0, 20.0, 20.0, -12.0, 20.0, 150.0, -12.0, 20.0], "i": [0, 1, 2, 2, 1, 3, 4, 5, 0, 0, 5, 1, 6, 1, 7, 3, 1, 6, 5, 7, 1, 8, 7, 5, 9, 6, 10, 9, 3, 6, 9, 11, 2, 9, 2, 3, 2, 11, 0, 0, 11, 4, 10, 11, 9, 4, 10, 8, 4, 11, 10, 5, 4, 8, 10, 6, 12, 13, 10, 12, 7, 14, 6, 6, 14, 12, 7, 8, 14, 8, 15, 14, 15, 8, 10, 15, 10, 13, 15, 12, 14, 13, 12, 15]}, {"kind": "face", "g": 0, "label": "x/body", "color": 14692400, "opacity": 1.0, "v": [150.0, 12.0, 12.0, 20.0, 12.0, 12.0, 20.0, 12.0, 20.0, 150.0, 12.0, 20.0, 20.0, -12.0, 12.0, 150.0, -12.0, 12.0, 20.0, -12.0, 20.0, 150.0, -12.0, 20.0], "i": [0, 1, 2, 3, 0, 2, 4, 5, 6, 5, 7, 6, 7, 2, 6, 3, 2, 7]}, {"kind": "part", "g": 0, "label": "placed part", "color": 3174624, "opacity": 0.55, "v": [65.0, 12.2, 11.7, 65.0, 12.2, 20.0, 65.0, 35.0, 11.7, 65.0, 35.0, 56.7, 65.0, -12.2, 20.0, 65.0, -12.2, 11.7, 65.0, -35.0, 11.7, 65.0, -35.0, 56.7, 105.0, 35.0, 56.7, 105.0, -35.0, 56.7, 105.0, 35.0, 11.7, 105.0, 12.2, 11.7, 105.0, 12.2, 20.0, 105.0, -12.2, 20.0, 105.0, -12.2, 11.7, 105.0, -35.0, 11.7], "i": [0, 1, 2, 1, 3, 2, 1, 4, 3, 5, 6, 4, 4, 7, 3, 6, 7, 4, 8, 3, 7, 8, 7, 9, 8, 10, 2, 8, 2, 3, 2, 11, 0, 2, 10, 11, 11, 12, 0, 0, 12, 1, 1, 12, 4, 4, 12, 13, 13, 14, 5, 13, 5, 4, 5, 14, 6, 6, 14, 15, 15, 7, 6, 15, 9, 7, 12, 11, 10, 8, 12, 10, 13, 12, 8, 15, 14, 13, 9, 15, 13, 9, 13, 8]}, {"kind": "sel", "g": 0, "label": "selected faces", "color": 2142288, "opacity": 1.0, "v": [105.0, 12.2, 11.7, 105.0, 12.2, 20.0, 65.0, 12.2, 11.7, 65.0, 12.2, 20.0, 65.0, -12.2, 20.0, 105.0, -12.2, 20.0, 105.0, -12.2, 11.7, 65.0, -12.2, 11.7], "i": [0, 1, 2, 2, 1, 3, 3, 1, 4, 4, 1, 5, 5, 6, 7, 5, 7, 4]}, {"kind": "part", "g": 0, "label": "placed part", "color": 3174624, "opacity": 0.55, "v": [105.0, -12.2, 11.7, 105.0, -12.2, 20.0, 105.0, -35.0, 11.7, 105.0, -35.0, 56.7, 105.0, 12.2, 20.0, 105.0, 12.2, 11.7, 105.0, 35.0, 11.7, 105.0, 35.0, 56.7, 65.0, -35.0, 56.7, 65.0, 35.0, 56.7, 65.0, -35.0, 11.7, 65.0, -12.2, 11.7, 65.0, -12.2, 20.0, 65.0, 12.2, 20.0, 65.0, 12.2, 11.7, 65.0, 35.0, 11.7], "i": [0, 1, 2, 1, 3, 2, 1, 4, 3, 5, 6, 4, 4, 7, 3, 6, 7, 4, 8, 3, 7, 8, 7, 9, 8, 10, 2, 8, 2, 3, 2, 11, 0, 2, 10, 11, 11, 12, 0, 0, 12, 1, 1, 12, 4, 4, 12, 13, 13, 14, 5, 13, 5, 4, 5, 14, 6, 6, 14, 15, 15, 7, 6, 15, 9, 7, 12, 11, 10, 8, 12, 10, 13, 12, 8, 15, 14, 13, 9, 15, 13, 9, 13, 8]}, {"kind": "sel", "g": 0, "label": "selected faces", "color": 2142288, "opacity": 1.0, "v": [65.0, -12.2, 11.7, 65.0, -12.2, 20.0, 105.0, -12.2, 11.7, 105.0, -12.2, 20.0, 105.0, 12.2, 20.0, 65.0, 12.2, 20.0, 65.0, 12.2, 11.7, 105.0, 12.2, 11.7], "i": [0, 1, 2, 2, 1, 3, 3, 1, 4, 4, 1, 5, 5, 6, 7, 5, 7, 4]}], "matches": [{"label": "x/body | faces [('5', [7]), ('6', [11]), ('7', [9])] | sliding/clearance (gap 0.20 mm) | slides along one axis"}]}, el = document.getElementById('v'), groups = {}; let fit = () => {};
+function init3d() {
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0xffffff);
+  const cam = new THREE.PerspectiveCamera(50, 1, 0.1, 1e6), ren = new THREE.WebGLRenderer({antialias: true}); el.appendChild(ren.domElement);
+  const ctl = new THREE.OrbitControls(cam, ren.domElement); scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.8); sun.position.set(1, 2, 3); scene.add(sun);
+  D.meshes.forEach(m => {
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(m.v, 3)); g.setIndex(m.i); g.computeVertexNormals(); g.computeBoundingBox();
+    const o = new THREE.Mesh(g, new THREE.MeshPhongMaterial({color: m.color, transparent: m.opacity < 1, opacity: m.opacity, side: THREE.DoubleSide, depthWrite: m.opacity >= 1, polygonOffset: true, polygonOffsetFactor: m.kind == 'sel' ? -2 : m.kind == 'face' ? -1 : 0}));
+    scene.add(o); (groups[m.g] = groups[m.g] || []).push(o);
+  });
+  fit = list => { const b = new THREE.Box3(); list.forEach(o => b.union(o.geometry.boundingBox)); const c = b.getCenter(new THREE.Vector3()), r = b.getSize(new THREE.Vector3()).length() || 1;
+    ctl.target.copy(c); cam.position.copy(c).add(new THREE.Vector3(1, 0.8, 1).normalize().multiplyScalar(r * 1.2)); cam.near = r / 1000; cam.far = r * 100; cam.updateProjectionMatrix(); ctl.update(); };
+  const size = () => { ren.setSize(el.clientWidth, el.clientHeight); cam.aspect = el.clientWidth / el.clientHeight; cam.updateProjectionMatrix(); };
+  addEventListener('resize', size); size(); fit(scene.children.filter(x => x.isMesh));
+  (function loop() { requestAnimationFrame(loop); ctl.update(); ren.render(scene, cam); })();
+}
+const list = document.getElementById('list');
+D.matches.forEach((m, n) => { const d = document.createElement('div'), c = document.createElement('input'); c.type = 'checkbox'; c.checked = true;
+  c.onchange = () => (groups[n] || []).forEach(o => o.visible = c.checked); d.append(c, ' ' + (n + 1) + '. ' + m.label);
+  d.onclick = e => { if (e.target !== c) fit(groups[n] || []); }; list.appendChild(d); });
+document.getElementById('hosts').onchange = e => (groups[-1] || []).forEach(o => o.visible = e.target.checked);
+if (D.title) { document.getElementById('title').textContent = D.title; document.getElementById('legend').textContent = D.legend; document.getElementById('hostsrow').style.display = 'none'; }
+try { init3d(); } catch (e) { el.textContent = '3D view unavailable here (' + e.message + '). Open this file in a browser with WebGL; the matches are listed on the left.'; }
+</script>

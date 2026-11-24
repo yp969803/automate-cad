@@ -1,0 +1,639 @@
+[
+ {
+  "part": "x/plate",
+  "object": "Part__Feature",
+  "faces": {
+   "1": [
+    7
+   ]
+  },
+  "sel": {
+   "1": [
+    1
+   ]
+  },
+  "gap_tol": 0.44999999999999996,
+  "poses": [
+   {
+    "matrix": [
+     [
+      1.0,
+      0.0,
+      0.0,
+      320.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      -50.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0,
+      -26.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.09999999993263964,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "sliding/clearance"
+   },
+   {
+    "matrix": [
+     [
+      -1.0,
+      0.0,
+      0.0,
+      -280.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      -50.0
+     ],
+     [
+      0.0,
+      0.0,
+      -1.0,
+      36.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.09999999993263917,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "sliding/clearance"
+   }
+  ]
+ },
+ {
+  "part": "x/washer",
+  "object": "Part__Feature002",
+  "faces": {
+   "1": [
+    4
+   ]
+  },
+  "sel": {
+   "1": [
+    1
+   ]
+  },
+  "gap_tol": 0.44999999999999996,
+  "poses": [
+   {
+    "matrix": [
+     [
+      1.0,
+      0.0,
+      0.0,
+      500.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      -80.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0,
+      -30.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.19999999993262974,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "sliding/clearance"
+   },
+   {
+    "matrix": [
+     [
+      -1.0,
+      0.0,
+      0.0,
+      -100.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      -80.0
+     ],
+     [
+      0.0,
+      0.0,
+      -1.0,
+      32.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.19999999993262974,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "sliding/clearance"
+   }
+  ]
+ },
+ {
+  "part": "x/plate",
+  "object": "Part__Feature",
+  "faces": {
+   "1": [
+    8
+   ]
+  },
+  "sel": {
+   "1": [
+    1
+   ]
+  },
+  "gap_tol": 0.44999999999999996,
+  "poses": [
+   {
+    "matrix": [
+     [
+      1.0,
+      0.0,
+      0.0,
+      350.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      -50.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0,
+      -26.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.09999999993264272,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "sliding/clearance"
+   },
+   {
+    "matrix": [
+     [
+      -1.0,
+      0.0,
+      0.0,
+      -250.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      -50.0
+     ],
+     [
+      0.0,
+      0.0,
+      -1.0,
+      36.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.09999999993263917,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "sliding/clearance"
+   }
+  ]
+ },
+ {
+  "part": "x/dowel_plate",
+  "object": "Part__Feature003",
+  "faces": {
+   "1": [
+    7
+   ]
+  },
+  "sel": {
+   "1": [
+    1
+   ]
+  },
+  "gap_tol": 0.44999999999999996,
+  "poses": [
+   {
+    "matrix": [
+     [
+      1.0,
+      0.0,
+      0.0,
+      315.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      140.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0,
+      -26.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.0,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "exact/interference"
+   },
+   {
+    "matrix": [
+     [
+      -1.0,
+      0.0,
+      0.0,
+      -285.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      140.0
+     ],
+     [
+      0.0,
+      0.0,
+      -1.0,
+      36.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.0,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "exact/interference"
+   }
+  ]
+ },
+ {
+  "part": "x/plate",
+  "object": "Part__Feature",
+  "faces": {
+   "1": [
+    9
+   ]
+  },
+  "sel": {
+   "1": [
+    1
+   ]
+  },
+  "gap_tol": 0.44999999999999996,
+  "poses": [
+   {
+    "matrix": [
+     [
+      1.0,
+      0.0,
+      0.0,
+      380.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      -50.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0,
+      -26.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.09999999993264272,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "sliding/clearance"
+   },
+   {
+    "matrix": [
+     [
+      -1.0,
+      0.0,
+      0.0,
+      -220.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      -50.0
+     ],
+     [
+      0.0,
+      0.0,
+      -1.0,
+      36.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.09999999993263917,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "sliding/clearance"
+   }
+  ]
+ },
+ {
+  "part": "x/dowel_plate",
+  "object": "Part__Feature003",
+  "faces": {
+   "1": [
+    8
+   ]
+  },
+  "sel": {
+   "1": [
+    1
+   ]
+  },
+  "gap_tol": 0.44999999999999996,
+  "poses": [
+   {
+    "matrix": [
+     [
+      1.0,
+      0.0,
+      0.0,
+      345.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      140.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0,
+      -26.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.01999999999998121,
+    "overlap": 6.270618936565029,
+    "open_parts_unchecked": 0,
+    "fit": "exact/interference"
+   },
+   {
+    "matrix": [
+     [
+      -1.0,
+      0.0,
+      0.0,
+      -255.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      140.0
+     ],
+     [
+      0.0,
+      0.0,
+      -1.0,
+      36.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.01999999999998035,
+    "overlap": 6.270618936565029,
+    "open_parts_unchecked": 0,
+    "fit": "exact/interference"
+   }
+  ]
+ },
+ {
+  "part": "x/plate",
+  "object": "Part__Feature",
+  "faces": {
+   "1": [
+    10
+   ]
+  },
+  "sel": {
+   "1": [
+    1
+   ]
+  },
+  "gap_tol": 0.44999999999999996,
+  "poses": [
+   {
+    "matrix": [
+     [
+      1.0,
+      0.0,
+      0.0,
+      410.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      -50.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0,
+      -26.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.09999999993264272,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "sliding/clearance"
+   },
+   {
+    "matrix": [
+     [
+      -1.0,
+      0.0,
+      0.0,
+      -190.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0,
+      -50.0
+     ],
+     [
+      0.0,
+      0.0,
+      -1.0,
+      36.5
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "free": [
+     1,
+     1
+    ],
+    "joint": "cylindrical (spins and slides)",
+    "gap": 0.09999999993263917,
+    "overlap": 0.0,
+    "open_parts_unchecked": 0,
+    "fit": "sliding/clearance"
+   }
+  ]
+ }
+]

@@ -22,6 +22,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt     # numpy, 
 .venv/bin/python src/search/match.py part.step 2,4,16,18 assembly.step    # face IDs = FaceN ids in FreeCAD
 ```
 Outputs: `cache/matches.json` (verified matches with 4x4 placement, joint type, gap, overlap) and `cache/highlight.html`, `.FCStd`, `.step`. Tests with known answers: `src/tools/make_test.py`; take one part out of an assembly: `src/tools/extract_part.py`.
+All sample cases in one go (checks each result against its expected answer, saves outputs to `assets/`): `.venv/bin/python src/tools/run_samples.py` (add `--lathe` for the real chuck key; needs `stepfile/Redraw.step`).
 
 ## Code layout
 - `src/cad/`: runs inside `freecad.cmd` (FreeCAD's Python): descriptors, verify, clouds, highlight, color_step.
@@ -121,5 +122,5 @@ Limits: the class depends on one threshold; a real exact fit modelled with a sma
 **Speed and robustness**
 - Cache sampled point clouds per assembly (sampling is repeated on every freeform search).
 - Run the search per part in parallel; each lathe run is about 4 minutes, mostly FreeCAD loading and checking.
-- Automated tests: the known-answer cases in `make_test.py` are run by hand; turn them into a script or pytest suite.
+- Automated tests: `run_samples.py` runs the 9 sample cases and compares them with the expected answers; the older small tests in `make_test.py` are still run by hand.
 - Option to skip the coloured-STEP/GUI step on machines without FreeCAD's GUI classes (it already fails soft).

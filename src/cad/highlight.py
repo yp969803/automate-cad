@@ -8,9 +8,11 @@ import FreeCAD, Part
 
 COLOR = dict(host=(0x9a9a9a, 0.25), face=(0xe03030, 1.0), part=(0x3070e0, 0.55), sel=(0x20b050, 1.0))
 
-def mesh(shape, kind, group, label):
-    v, t = shape.tessellate(max(shape.BoundBox.DiagonalLength / 200, 0.01))
-    color, opacity = COLOR[kind]
+PALETTE = [0x4e79a7, 0xf28e2b, 0x59a14f, 0xb07aa1, 0x76b7b2, 0xedc948, 0xff9da7, 0x9c755f, 0xbab0ac, 0x8cd17d, 0xb6992d, 0x499894]
+
+def mesh(shape, kind, group, label, color=None, opacity=None, detail=200):
+    v, t = shape.tessellate(max(shape.BoundBox.DiagonalLength / detail, 0.01))
+    color, opacity = (color, opacity) if color is not None else COLOR[kind]
     return dict(kind=kind, g=group, label=label, color=color, opacity=opacity,
                 v=[round(c, 3) for p in v for c in (p.x, p.y, p.z)], i=[k for tri in t for k in tri])
 
@@ -33,11 +35,25 @@ def write(part, shapes, res, prefix):
     doc.recompute(); (os.path.exists(prefix + ".FCStd") and os.remove(prefix + ".FCStd")); doc.saveAs(prefix + ".FCStd")  # no .FCBak clutter
     open(prefix + ".html", "w").write(HTML.replace("__DATA__", json.dumps(dict(meshes=meshes, matches=matches))))
 
+def page(meshes, matches, path, title=None, legend=None):
+    open(path, "w").write(HTML.replace("__DATA__", json.dumps(dict(meshes=meshes, matches=matches, title=title, legend=legend))))
+
+def views(part_step, asm_step, ids, prefix):
+    """Write <prefix>_part.html (the part, selected faces green) and <prefix>_assembly.html (every part in its own colour)."""
+    import descriptors, verify
+    part = verify.shape_of(descriptors.load(part_step)[1][0]); faces = part.Faces
+    sel = Part.makeCompound([faces[i - 1] for i in ids])
+    page([mesh(part, "part", 0, "part"), mesh(sel, "sel", 0, "selected faces")], [dict(label=f"selected part, faces {ids}")], prefix + "_part.html",
+         "Selected part", "blue: the part - green: the faces to mate")
+    leaves = descriptors.load(asm_step)[1]
+    page([mesh(verify.shape_of(o), "asm", k, o.Label, PALETTE[k % len(PALETTE)], 0.9, detail=100) for k, o in enumerate(leaves)],
+         [dict(label=descriptors.part_path(o)) for o in leaves], prefix + "_assembly.html", "Assembly", f"{len(leaves)} parts, one colour each. Click a line to zoom to a part.")
+
 HTML = """<!doctype html><meta charset="utf-8"><title>Matches</title>
 <style>body{margin:0;font:13px sans-serif;display:flex;height:100vh}#side{width:340px;overflow:auto;padding:8px;background:#f4f4f4;color:#222}
 #side div{margin:4px 0;cursor:pointer}#v{flex:1}small{color:#666}</style>
-<div id="side"><b>Verified matches</b><br><small>grey: part holding the match - red: matched faces - blue: your part placed - green: its selected faces. Click a line to zoom.</small>
-<div><label><input type="checkbox" id="hosts" checked> show holding parts</label></div><div id="list"></div></div><div id="v"></div>
+<div id="side"><b id="title">Verified matches</b><br><small id="legend">grey: part holding the match - red: matched faces - blue: your part placed - green: its selected faces. Click a line to zoom.</small>
+<div id="hostsrow"><label><input type="checkbox" id="hosts" checked> show holding parts</label></div><div id="list"></div></div><div id="v"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
@@ -63,5 +79,6 @@ D.matches.forEach((m, n) => { const d = document.createElement('div'), c = docum
   c.onchange = () => (groups[n] || []).forEach(o => o.visible = c.checked); d.append(c, ' ' + (n + 1) + '. ' + m.label);
   d.onclick = e => { if (e.target !== c) fit(groups[n] || []); }; list.appendChild(d); });
 document.getElementById('hosts').onchange = e => (groups[-1] || []).forEach(o => o.visible = e.target.checked);
+if (D.title) { document.getElementById('title').textContent = D.title; document.getElementById('legend').textContent = D.legend; document.getElementById('hostsrow').style.display = 'none'; }
 try { init3d(); } catch (e) { el.textContent = '3D view unavailable here (' + e.message + '). Open this file in a browser with WebGL; the matches are listed on the left.'; }
 </script>"""
