@@ -15,7 +15,7 @@ The part is not in its mated position, so I compare shapes, not positions.
 - Gap up to 0.05 mm is exact, more is sliding.
 - Freeform faces: point-cloud alignment, then the same check.
 
-Why rules: STEP gives exact surfaces, there is no training data, and a wrong match can be traced to one number. Every generated test has decoys, and none match.
+Why rules: STEP gives exact surfaces, there is no training data, and a wrong match can be traced to one number. Every generated test has decoys, and none match. Other options I considered: [docs/alternatives.md](docs/alternatives.md).
 
 ## What breaks
 - 53 of 123 lathe parts are open shells, so no overlap check on them.
