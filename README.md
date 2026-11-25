@@ -25,8 +25,22 @@ Example:
 ```
 - Face ids are FreeCAD face numbers of the part (`Face6` is `6`), comma separated.
 - The first run on a file caches its descriptors in `cache/` (seconds; 1 to 2 minutes for a 22 MB assembly).
-- Output: the matches on the console, `out.json` (default `cache/matches.json`), and `cache/highlight.html` (open in a browser), `cache/highlight.step` and `cache/highlight.FCStd`.
 - `--no-verify` skips the geometry check and the highlight files.
+
+## Where the output goes
+Each run overwrites the previous one.
+
+| Output | Location |
+|---|---|
+| Matches (part, face ids, placement, fit, gap) | printed on the console, and `cache/matches.json` (or the `out.json` you gave) |
+| Highlight viewer, open in a browser | `cache/highlight.html` |
+| Highlighted model, open in FreeCAD | `cache/highlight.FCStd` |
+| Same, coloured STEP | `cache/highlight.step` |
+| Face description of each STEP file (reused on later runs) | `cache/<file name>.json` |
+
+`run_samples.py` writes to `assets/<case>/` instead: `matches.json`, `highlight.html`, `part.png`, `assembly.png`, `highlight.png`, plus the summary `assets/README.md`.
+
+In `highlight.step`: grey = part holding the match, red = matched faces, blue = your part placed there, green = its selected faces.
 
 ## Run all test cases
 ```bash
