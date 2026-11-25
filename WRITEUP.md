@@ -22,9 +22,9 @@ Why rules: STEP gives exact surfaces, there is no training data, and a wrong mat
 - Depth along a free axis is guessed (centred).
 - Tolerances tuned on these samples only.
 - No threads, gears or mirrored parts.
-- One selected plane matches too much.
+- If you select only one plane, there are no relations to check, so it matches every plane of that size. Select two or more faces.
 - Freeform is slow and only tested on synthetic shapes.
-- Mostly generated samples; no real vice.
+
 
 ## With another week
 1. Close open shells so overlap works everywhere.
